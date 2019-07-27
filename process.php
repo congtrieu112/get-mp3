@@ -86,9 +86,30 @@
 					$zingMp3Api = 'http://api.mp3.zing.vn/api/mobile/';
 					$zingMp3Link = 'http://mp3.zing.vn';
 					$zingMp3Cdn = 'http://image.mp3.zdn.vn/';
+					$zingMp3Media = "https://mp3.zing.vn/xhr";
+					$zingMp3ApiLink = "http://mp3.zing.vn/embed";
+					$pregMatch  = "";
+					$format = "song";
+					if(strpos($link,"video-clip") !== false) {
+						$zingMp3ApiLink .= "/video/";
+						$pregMatch = '/data-xml="(.*?)"/';
+						$format = "video";
+					}else{
+						$zingMp3ApiLink .="/song/";
+						$pregMatch = '/xml="(.*?)"/';
+					}
+					$apiEmptyLink = $zingMp3ApiLink.$mp3EncodeId;
 					
 					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					$dataSend = goCurl($apiEmptyLink);
+					$urlToken = preg_match_all($pregMatch, $dataSend, $outputArray);
 					
+					$urlToken = $zingMp3Media.$outputArray[1][0];
+					$linkMedia=  goCurl($urlToken);
+					// var_dump($linkMedia);
+					$dataJsonLink = json_decode($linkMedia,true);
+					
+					$linkMp3 = ($format==="song")?"https:".$dataJsonLink["data"]["source"][128]:$dataJsonLink["data"]["source"]["mp4"]["480p"];
 					$mp3Json = goCurl($zingMp3Api.'song/getsonginfo?requestdata={%22id%22:%22'.$mp3EncodeId.'%22}');
 					$mp3Data = json_decode($mp3Json, true);
 					$mp3['encodeId'] = $mp3Data['song_id_encode'];
@@ -113,10 +134,10 @@
 					if ($videoData['link'] != '') $mp3['videoLink'] = $zingMp3Link.$videoData['link'];
 					if ($videoData['thumbnail'] != '') $mp3['videoImage'] = $zingMp3Cdn.$videoData['thumbnail'];
 					$mp3['duration'] = $mp3Data['duration'];
-					$mp3['play'] = $mp3Data['total_play'];
+					$mp3['play'] = $linkMp3;//$mp3Data['total_play'];
 					$mp3['lyricFile'] =  $mp3Data['lyrics_file'];
-					$mp3['download128'] = $mp3Data['source']['128'];
-					$mp3['download320'] = $mp3Data['source']['320'];
+					$mp3['download128'] = $mp3['play'];// $mp3Data['source']['128'];
+					$mp3['download320'] =  $mp3Data['source']['320'];
 					$mp3['downloadLl'] = $mp3Data['source']['lossless'];
 					$mMp3Content = goCurl('http://m.mp3.zing.vn/bai-hat/a/'.$mp3EncodeId.'.html');
 					$mp3['lyricText'] = getStr($mMp3Content,'<p id="conLyrics" class="row-5">','</p>');
