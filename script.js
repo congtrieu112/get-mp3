@@ -7,6 +7,8 @@
 
 $(document).ready(function() {
 	var player = document.getElementById('playerSource'),
+		playVideo = document.getElementById('playerSourceVideo'),
+		submitItem = document.getElementById("submit"),
 	playPause = document.getElementById('playPause'),
 	currentTime = document.getElementById('currentTime'),
 	seek = document.getElementById('seek'),
@@ -17,9 +19,35 @@ $(document).ready(function() {
 
 	window.onload = function() {
 		playPause.addEventListener('click', playPauseMusic, false);
+		playPause.addEventListener('click', playPauseVideo, false);
 		muted.addEventListener('click', mutedMusic, false);
+		muted.addEventListener('click', mutedVideo, false);
 		player.addEventListener('ended', endedMusic, false);
+		playVideo.addEventListener('ended', endedVideo, false);
+		playVideo.ontimeupdate = getCurrentTime;
+		playVideo.onvolumechange = getVolumChange;
+		playVideo.addEventListener("change", function () {
+			console.log("change");
+			playVideo.play();
+		})
+		
+		submitItem.addEventListener('build', function (e) {
+			// e.target matches elem
+			alert(23432);
+		}, false);
+
+
 	};
+	function getVolumChange() {
+		console.log("playVideo.volume", playVideo.volume)
+	}
+	function getCurrentTime() {
+		// console.log(playVideo.currentTime);
+		if (playVideo.currentTime > 0) {
+			// playVideo.volume = 1;
+			// playVideo.pause();
+		}
+	}
 
 	function playPauseMusic() {
 		if (player.paused) {
@@ -36,8 +64,84 @@ $(document).ready(function() {
 		}
 	}
 
+	function fetchVideoAndPlay(url,video) {
+		fetch(url)
+			.then(response => {
+				console.log(response)
+				response.blob()
+			})
+			.then(blob => {
+				video.srcObject = blob;
+				return video.play();
+			})
+			.then(_ => {
+				// Video playback started ;)
+			})
+			.catch(e => {
+				// Video playback failed ;(
+			})
+	}
+
+	function playPauseVideo() {
+		if (playVideo.paused) {
+			
+			fetchVideoAndPlay($("#playerSourceVideo").attr("src"), playVideo);
+			// console.log($("#playerSourceVideo").get(0).currentSrc, $("#playerSourceVideo").attr("src"));
+			
+			// var isPlaying = playVideo.currentTime > 0 && !playVideo.paused && !playVideo.ended
+			// 	&& playVideo.readyState > 2;
+
+			// if (!isPlaying) {
+			// 	playVideo.play();
+			// }
+			// playVideo.muted = true;
+			
+
+			// playVideo.muted = true;
+			// playVideo.volume = 0;
+			// playVideo.pause();
+			// playVideo.dispatchEvent(new CustomEvent("change"))
+			// setTimeout(function () {
+				
+
+			// 	playVideo.play();
+			// },1000)
+			// document.getElementById("playerSourceVideo").play()
+			// if (playPromise !== null) {
+			// 	playPromise.catch(() => { playVideo.play(); document.getElementById("playerSourceVideo").play() })
+			// }
+			// var promise = document.querySelector('video').play();
+
+			// if (promise !== undefined) {
+			// 	promise.then(_ => {
+			// 		// Autoplay started!
+			// 		console.log("ok")
+			// 	}).catch(error => {
+			// 		// Autoplay was prevented.
+			// 		// Show a "Play" button so that user can start playback.
+			// 		console.log("error", error)
+					
+			// 	});
+			// }
+
+			timeInterval = setInterval(timeUpdateVideo, 100);
+			seek.addEventListener('change', seekVideo, false);
+			playPause.classList.remove('icon-play');
+			playPause.classList.add('icon-pause');
+		} else {
+			playVideo.pause();
+			clearInterval(timeInterval);
+			playPause.classList.remove('icon-pause');
+			playPause.classList.add('icon-play');
+		}
+	}
+
 	function seekMusic() {
 		player.currentTime = seek.value;
+	}
+
+	function seekVideo() {
+		playVideo.currentTime = seek.value;
 	}
 
 	function mutedMusic() {
@@ -52,11 +156,29 @@ $(document).ready(function() {
 		}
 	}
 
+	function mutedVideo() {
+		if (playVideo.muted) {
+			playVideo.muted = false;
+			muted.classList.remove('icon-volume-mute');
+			muted.classList.add('icon-volume-high');
+		} else {
+			playVideo.muted = true;
+			muted.classList.remove('icon-volume-high');
+			muted.classList.add('icon-volume-mute');
+		}
+	}
+
 	function timeUpdateMusic() {
 		durationTime.innerHTML = secondToMinutes(player.duration);
 		currentTime.innerHTML = secondToMinutes(player.currentTime);
 		seek.max = player.duration;
 		seek.value = player.currentTime;
+	}
+	function timeUpdateVideo() {
+		durationTime.innerHTML = secondToMinutes(playVideo.duration);
+		currentTime.innerHTML = secondToMinutes(playVideo.currentTime);
+		seek.max = playVideo.duration;
+		seek.value = playVideo.currentTime;
 	}
 
 	function secondToMinutes(seconds) {
@@ -78,6 +200,13 @@ $(document).ready(function() {
 		playPause.classList.remove('icon-pause');
 		playPause.classList.add('icon-play');
 	}
+
+	function endedVideo() {
+		playVideo.pause();
+		playVideo.currentTime = 0;
+		playPause.classList.remove('icon-pause');
+		playPause.classList.add('icon-play');
+	}
 	
 	$('#method').change(function(){
 		if ($('#method').val() == '1')
@@ -90,6 +219,23 @@ $(document).ready(function() {
 			$('#method1').hide();
 		}
 	});
+	console.log(window.location.pathname);
+	if (window.location.pathname.indexOf("video") > -1 || window.location.pathname.indexOf("song") > -1) {
+		$('#method').val(2).trigger("change");
+		$('#type').val(1).trigger("change");
+		if (window.location.pathname.indexOf("video") > -1) {
+			$('#link').val(window.location.pathname.replace('/', ''));
+		} else if (window.location.pathname.indexOf("song") > -1) {
+			$('#link').val(window.location.pathname.replace('/', ''));
+		}
+		$("#submit").trigger("click");
+		// var e = new Event('click');
+		var event = document.createEvent('Event');
+		event.initEvent("build", true, true);
+    submitItem.dispatchEvent(event);
+		// var submitData = new CustomEvent('printerstatechanged',{"detail":123});
+		// submitItem.dispatchEvent(submitData);
+	}
 });
 
 
@@ -150,6 +296,8 @@ $(document).ready(function() {
 										}
 										
 										if (result['videoLink'] != null) {
+											$('#playerSourceVideo').attr('src', result['download128']);
+											$('#playerSourceVideo').attr("poster", result['videoImage'])
 											$('#resultVideoLink').attr('href',result['videoLink']);
 											if (result['videoImage'] != null) {
 												$('#resultVideoImage').attr('src',result['videoImage']);
@@ -159,6 +307,7 @@ $(document).ready(function() {
 											$('#resultVideoImage').show();
 										} else {
 											$('#resultVideoImage').hide();
+											$('#playerSource').attr('src', result['download128']);
 										}
 										
 										if (result['albumLink'] != null) {
@@ -173,7 +322,14 @@ $(document).ready(function() {
 											$('#resultAlbumImage').hide();
 										}
 										
-										$('#playerSource').attr('src',result['download128']);
+										
+										// if (result['type'] === 'video') {
+										// 	$('#playerSource').replaceWith("<video id=\"playerSource\" src=\"" + result['download128'] + "\" preload=\"auto\" loop type=\"video/mp4\"></video>")
+										// } else {
+										// 	$('#playerSource').replaceWith("<video id=\"playerSource\" src=\"" + result['download128'] + "\" preload=\"auto\" loop type=\"video/mp4\"></video>")
+
+											
+										// }
 										
 										$('#result128').val(result['download128']);
 										$('#a128').attr('href',result['download128']);

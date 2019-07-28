@@ -6,7 +6,9 @@
 	* @param [GET]title,[GET]artist?,[GET]type
 	* @core https://github.com/anbinh/dna/blob/master/zi/apifuncs.go
 	*/
-
+	header("Access-Control-Allow-Headers: *");
+	header('Access-Control-Allow-Origin: *');
+	header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 	error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,6 +43,7 @@
 	$hostType = $_GET['type'];
 	$method = $_GET['method'];
 	$link = $_GET['link'];
+	$typeMp3 = $_GET["type-audio"];
 
 	if (($title == '' && $method == '1')
 	 || ($link == '' && $method == '2'))
@@ -65,15 +68,20 @@
 						$url .= '&sort=total_play'; // total_play,created_date
 				
 						$mp3SearchContent = goCurl($url);
+						
 						$mp3EncodeId = getStr($mp3SearchContent,'<div class="item-song" id="song','"');
 						
 					break;
 					case '2':
-					
 						$mp3EncodeId = explode('/',$link);
-						$mp3EncodeId = explode('.',$mp3EncodeId['5']);
-						$mp3EncodeId = $mp3EncodeId['0'];
 						
+						if(count($mp3EncodeId)<2) {
+							$mp3EncodeId = str_replace("video-","",$link);
+							$mp3EncodeId = str_replace("song-", "", $mp3EncodeId);
+						}else{
+							$mp3EncodeId = explode('.', $mp3EncodeId['5']);
+							$mp3EncodeId = $mp3EncodeId['0'];
+						}
 					break;
 					default:
 						$mp3['error'] = 4;
@@ -90,7 +98,7 @@
 					$zingMp3ApiLink = "http://mp3.zing.vn/embed";
 					$pregMatch  = "";
 					$format = "song";
-					if(strpos($link,"video-clip") !== false) {
+					if(strpos($link,"video") !== false || $typeMp3 === "video") {
 						$zingMp3ApiLink .= "/video/";
 						$pregMatch = '/data-xml="(.*?)"/';
 						$format = "video";
@@ -98,16 +106,20 @@
 						$zingMp3ApiLink .="/song/";
 						$pregMatch = '/xml="(.*?)"/';
 					}
+					
 					$apiEmptyLink = $zingMp3ApiLink.$mp3EncodeId;
 					
 					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 					$dataSend = goCurl($apiEmptyLink);
+					// echo ($apiEmptyLink);
+
 					$urlToken = preg_match_all($pregMatch, $dataSend, $outputArray);
 					
 					$urlToken = $zingMp3Media.$outputArray[1][0];
 					$linkMedia=  goCurl($urlToken);
 					// var_dump($linkMedia);
 					$dataJsonLink = json_decode($linkMedia,true);
+					file_put_contents(__DIR__."/log.txt",print_r($dataJsonLink,true),FILE_APPEND);
 					
 					$linkMp3 = ($format==="song")?"https:".$dataJsonLink["data"]["source"][128]:$dataJsonLink["data"]["source"]["mp4"]["480p"];
 					$mp3Json = goCurl($zingMp3Api.'song/getsonginfo?requestdata={%22id%22:%22'.$mp3EncodeId.'%22}');
@@ -130,19 +142,27 @@
 					if ($albumData['cover'] != '') $mp3['albumImage'] = $zingMp3Cdn.$albumData['cover']; 
 					$mp3['videoId'] = $mp3['id'];
 					$videoJson = goCurl($zingMp3Api.'video/getvideoinfo?requestdata={%22id%22:'.$mp3['videoId'].'}');
-					$videoData = json_decode($videoJson, true);
-					if ($videoData['link'] != '') $mp3['videoLink'] = $zingMp3Link.$videoData['link'];
-					if ($videoData['thumbnail'] != '') $mp3['videoImage'] = $zingMp3Cdn.$videoData['thumbnail'];
+					$videoData = [];// json_decode($videoJson, true);
+					if($format==="video"){
+						$videoData['link'] = $linkMp3;
+						$videoData['thumbnail'] = $dataJsonLink['data']['thumbnail'];
+					}else{
+						$videoData['thumbnail'] = isset($dataJsonLink['data']["album"]["thumbnail_medium"]) ? $dataJsonLink['data']["album"]["thumbnail_medium"] : $dataJsonLink["data"]["artist"]["thumbnail"];
+					}
+					$mp3["singer"] = $dataJsonLink["data"]["artists_names"];
+					if ($videoData['link'] != '') $mp3['videoLink'] = $videoData['link'];
+					if ($videoData['thumbnail'] != '') $mp3['videoImage'] = $videoData['thumbnail'];
+					$mp3['title'] = $dataJsonLink['data']['title'];
 					$mp3['duration'] = $mp3Data['duration'];
 					$mp3['play'] = $linkMp3;//$mp3Data['total_play'];
 					$mp3['lyricFile'] =  $mp3Data['lyrics_file'];
-					$mp3['download128'] = $mp3['play'];// $mp3Data['source']['128'];
+					$mp3['download128'] = $mp3['play'];// $mp3Data['source']['128']; "/video-2.php";
 					$mp3['download320'] =  $mp3Data['source']['320'];
 					$mp3['downloadLl'] = $mp3Data['source']['lossless'];
 					$mMp3Content = goCurl('http://m.mp3.zing.vn/bai-hat/a/'.$mp3EncodeId.'.html');
 					$mp3['lyricText'] = getStr($mMp3Content,'<p id="conLyrics" class="row-5">','</p>');
 					$mp3['embed'] = '<iframe width="600" height="168" src="http://mp3.zing.vn/embed/song/'.$mp3EncodeId.'" frameborder="0" allowfullscreen="true"></iframe>';
-				}
+					}
 				else
 				{
 					$mp3['error'] = 3;
@@ -198,6 +218,7 @@
 					$mp3HqJsonContent = goCurl('http://www.nhaccuatui.com/download/song/'.$mp3Id);
 					$mp3['download320'] = str_replace('\/','/',getStr($mp3HqJsonContent,'"stream_url":"','"'));
 					$mp3['downloadLl'] = '';
+					
 				}
 				else
 				{

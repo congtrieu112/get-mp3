@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<video id="myVideo" width="320" height="240" controls autoplay>
+  <source src="https://vnso-zn-6-tf-mcloud-bf-s7-mv-zmp3.zadn.vn/SxwyodjId8g/4fb28b25df63363d6f72/a75950233166d8388177/480/Cho-Anh-Xin-Them-1-Phut.mp4?authen=exp=1564452714~acl=/SxwyodjId8g/*~hmac=ea95f9105997783953856759613e09af" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+<p>Click the button to find out if the movie automatically started to play as soon as it was ready.</p>
+
+<button onclick="myFunction()">Try it</button>
+
+<p id="demo"></p>
+
+<script>
+function myFunction() {
+  var x = document.getElementById("myVideo").autoplay;
+  document.getElementById("demo").innerHTML = x;
+}
+</script>
+
+</body>
+</html>

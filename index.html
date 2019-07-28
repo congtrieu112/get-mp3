@@ -17,8 +17,8 @@
 	<meta name='abstract' class='description' content='Lấy thông tin bài hát từ Mp3 Zing và NhacCuaTui: Lời bài hát - lyric, tải về, download chất lượng 128kbps, 320kbps, LossLess'>
 	<meta property='og:description' class='description' content='Lấy thông tin bài hát từ Mp3 Zing và NhacCuaTui: Lời bài hát - lyric, tải về, download chất lượng 128kbps, 320kbps, LossLess' />
 	<meta name='keyword' class='keyword' content='get mp3 full info, lyric, loi bai hat, download, tai nhac, 128kbps, 320kbps, lossless, get link, zing mp3, nhaccuatui, nct' />
-	<meta property='og:url' itemprop='url' content='http://d3l.pe.hu/getmp3'/>
-	<link rel='canonical' href='http://d3l.pe.hu/getmp3' />
+	<meta property='og:url' itemprop='url' content='https://d3l.pe.hu/getmp3'/>
+	<link rel='canonical' href='https://d3l.pe.hu/getmp3' />
 	<meta name='copyright' content='Del Huỳnh' />
 	<meta name='author' content='Del Huỳnh' />
 	<meta property='og:site_name' content='getmp3' />
@@ -58,6 +58,7 @@
 							<select class="form-control" id="method" name="method">
 								<option value="1" selected>Thông tin</option>
 								<option value="2">Link</option>
+								<option value="3">ID</option>
 							</select>
 						</div>
 						<div id='method1' class="form-group">
@@ -98,9 +99,12 @@
 					</div>
 					<h2 id='mainInfo'><a href='' class='noStyle' target="_blank"  id='resultTitleLink'><b id='resultTitle'></b/></a> - <a href='' target="_blank"  class='noStyle' id='resultArtist'></a></h2>
 					<div class="player">
-						<audio id="playerSource" src="" preload="auto" loop>
+						<audio id="playerSource" src="" preload="auto" loop autoplay>
 							<p>Trình duyệt của bạn không hỗ trợ HTML5 Audio</p>
 						</audio>
+						<video id="playerSourceVideo" src="" preload="auto" loop autoplay>
+							<p>Trình duyệt của bạn không hỗ trợ HTML5 Video</p>
+						</video>
 						<div class="playerControl">
 							<button id="playPause" class="player--play icon-play"></button>
 							<span id="currentTime">00:00</span>
@@ -180,7 +184,7 @@
 			<div class="container">
 			<div class="jumbotron">
 				<div class="container" style="text-align: right">
-					Copyright by <a href="http://fb.com/huynhducuduy" class='noStyle'><b>Del Huỳnh</b></a>
+					Copyright by <a href="https://fb.com/congtrieupro" class='noStyle'><b>Sanphamweb.com</b></a>
 				</div>
 			</div>
 			</div>
